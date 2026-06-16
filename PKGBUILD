@@ -4,7 +4,7 @@
 
 pkgname=sudo
 _sudover=1.9.17p2
-pkgrel=3
+pkgrel=4
 pkgver=${_sudover/p/.p}
 pkgdesc="Give certain users the ability to run some commands as root"
 arch=('x86_64')
@@ -22,7 +22,7 @@ source=(https://www.sudo.ws/sudo/dist/$pkgname-$_sudover.tar.gz{,.sig}
 sha256sums=('4a38a1ab3adb1199257edc2a7c4a2bd714665eb605b04368843b06dada2cfcfb'
             'SKIP'
             'bd4bc2f5d85cbe14d7e7acc5008cb4fe62c38de7d42dc6876c87bfaa273c0a6e'
-            'bd088a08804f31c044d6f70cbf9fc6017e54d5471f3a0692bd3fcc05bfb43059')
+            '3435f0ae6c37c605b0161b193a41b4cb1e03779291aba4d235b09d291937ab5e')
 validpgpkeys=('59D1E9CCBA2B376704FDD35BA9F4C021CEA470FB')
 
 prepare() {
