@@ -1,7 +1,7 @@
 pkgbase = sudo
 	pkgdesc = Give certain users the ability to run some commands as root
 	pkgver = 1.9.17.p2
-	pkgrel = 2
+	pkgrel = 3
 	url = https://www.sudo.ws/sudo/
 	install = sudo.install
 	arch = x86_64
@@ -23,7 +23,7 @@ pkgbase = sudo
 	sha256sums = 4a38a1ab3adb1199257edc2a7c4a2bd714665eb605b04368843b06dada2cfcfb
 	sha256sums = SKIP
 	sha256sums = bd4bc2f5d85cbe14d7e7acc5008cb4fe62c38de7d42dc6876c87bfaa273c0a6e
-	sha256sums = d1738818070684a5d2c9b26224906aad69a4fea77aabd960fc2675aee2df1fa2
+	sha256sums = bd088a08804f31c044d6f70cbf9fc6017e54d5471f3a0692bd3fcc05bfb43059
 
 pkgname = sudo
 	depends = glibc
