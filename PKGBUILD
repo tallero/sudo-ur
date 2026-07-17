@@ -47,6 +47,11 @@ build() {
     --with-passprompt="[sudo] password for %p: " \
     --with-secure-path-value=/usr/local/sbin:/usr/local/bin:/usr/bin \
     --with-all-insults
+
+  # Prevent excessive overlinking due to libtool; for details, please refer to
+  # https://gitlab.archlinux.org/archlinux/packaging/packages/sudo/-/merge_requests/3.
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+
   make
 }
 
