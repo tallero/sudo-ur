@@ -3,7 +3,6 @@ pkgbase = sudo
 	pkgver = 1.9.17.p2
 	pkgrel = 6
 	url = https://www.sudo.ws/sudo/
-	install = sudo.install
 	arch = x86_64
 	license = custom
 	depends = glibc
