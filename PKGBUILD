@@ -176,7 +176,7 @@ if [[ "${_android}" == "true" ]]; then
 fi
 if [[ "${_gnu}" == "true" ]]; then
   pkgname+=(
-    "${_pkg}-gnu"
+    "${_pkg}"
   )
 fi
 _sudover=1.9.17p2
@@ -357,7 +357,7 @@ check() {
   fi
 }
 
-package_sudo-gnu() {
+package_sudo() {
   local \
     _make_opts=()
   _make_opts+=(
