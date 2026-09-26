@@ -3,22 +3,110 @@
 # Contributor: Allan McRae <allan@archlinux.org>
 # Contributor: Tom Newsom <Jeepster@gmx.co.uk>
 
-pkgname=sudo
-_sudover=1.9.17p2
-pkgrel=6
-pkgver=${_sudover/p/.p}
-pkgdesc="Give certain users the ability to run some commands as root"
-arch=('x86_64')
-url="https://www.sudo.ws/sudo/"
-license=('custom')
-depends=('glibc' 'openssl' 'pam' 'libldap' 'zlib')
-backup=('etc/pam.d/sudo'
-        'etc/sudo.conf'
-        'etc/sudo_logsrvd.conf'
-        'etc/sudoers')
-source=(https://www.sudo.ws/sudo/dist/$pkgname-$_sudover.tar.gz{,.sig}
-        sudo_logsrvd.service
-        sudo.pam)
+if [[ ! -v "_os" ]]; then
+  _os="$(
+    uname \
+      -o)"
+fi
+_pkg=sudo
+if [[ ! -v "_android" ]]; then
+  _android="false"
+  if [[ "${_os}" == "Android" ]]; then
+    _android="true"
+  fi
+fi
+if [[ ! -v "_gnu" ]]; then
+  _gnu="true"
+  if [[ "${_android}" == "true" ]]; then
+    _gnu="false"
+  fi
+fi
+if [[ ! -v "_ns" ]]; then
+  _ns="${_pkg}"
+  if [[ "${_android}" == "true" ]]; then
+    _ns="agnosticapollo"
+    _ns="themartiancompany"
+  fi
+  _ns="themartiancompany"
+fi
+if [[ ! -v "_git_service" ]]; then
+  _git_service="github"
+fi
+if [[ ! -v "_git" ]]; then
+  _git="false"
+fi
+if [[ ! -v "_release" ]]; then
+  _release="false"
+fi
+if [[ ! -v "_http" ]]; then
+  if [[ "${_git}" == "true" ]]; then
+    _http="https://${_git_service}.com"
+  elif [[ "${_git}" == "true" ]]; then
+    _http="https://${_git_service}.com"
+    if [[ "${_release}" == "true" ]]; then
+      _http="https://www.${_pkg}.ws"
+    fi
+  fi
+fi
+pkgbase="${_pkg}"
+pkgname=(
+)
+if [[ "${_android}" == "true" ]]; then
+  pkgname+=(
+    "${_pkg}-android"
+  )
+fi
+if [[ "${_gnu}" == "true" ]]; then
+  pkgname+=(
+    "${_pkg}-gnu"
+  )
+fi
+_gnu_ver=1.9.17
+_android_ver=1.2.0
+pkgver="1000000.g${_gnu_ver}.a${_android_ver}"
+pkgrel=1
+_pkgdesc=(
+  "Give certain users the"
+  "ability to run some commands as root."
+)
+pkgdesc="${_pkgdesc[*]}"
+arch=()
+if [[ "${_gnu}" == "true" ]]; then
+  arch+=(
+    "aarch64"
+    "arm"
+    "armv6l"
+    "armv7l"
+    "armv8l"
+    "i686"
+    "mips"
+    "pentium4"
+    "powerpc"
+    "x86_64"
+  )
+fi
+_gnu_url="https://www.${_pkg}.ws/${_pkg}"
+url="https://www.${_git_service}.com/${_ns}/${_pkg}"
+license=(
+  'custom'
+)
+depends=(
+  'glibc'
+  'openssl'
+  'pam'
+  'libldap'
+  'zlib'
+)
+backup=(
+  'etc/pam.d/sudo'
+  'etc/sudo.conf'
+  'etc/sudo_logsrvd.conf'
+  'etc/sudoers'
+)
+source=(
+  "${_gnu_url}/${_pkg}/dist/${_pkg}-${_sudover}.tar.gz{,.sig}
+  "sudo_logsrvd.service
+  "sudo.pam)
 sha256sums=('4a38a1ab3adb1199257edc2a7c4a2bd714665eb605b04368843b06dada2cfcfb'
             'SKIP'
             'bd4bc2f5d85cbe14d7e7acc5008cb4fe62c38de7d42dc6876c87bfaa273c0a6e'
