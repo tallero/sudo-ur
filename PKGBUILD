@@ -351,6 +351,19 @@ if [[ "${_android}" == "true" ]]; then
     "${_sum}"
   )
 fi
+if [[ "${_release}" == "true" ]]; then
+  noextract=(
+    "${_tarfile}"
+  )
+fi
+
+prepare() {
+  if [[ "${_release}" == "true" ]]; then
+    tar \
+      vxf \
+      "${_tarfile}"
+  fi
+}
 
 build() {
   local \
