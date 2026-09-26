@@ -351,7 +351,11 @@ fi
 
 build() {
   local \
+    _cflags=() \
     _configure_opts=()
+  _cflags+=(
+    ${CFLAGS}
+  )
   if [[ "${_gnu}" == "true" ]]; then
     _configure_opts+=(
       --prefix="/usr"
@@ -369,7 +373,14 @@ build() {
       --with-passprompt="[${_pkg}] password for %p: "
       --with-secure-path-value="/usr/local/sbin:/usr/local/bin:/usr/bin"
       --with-all-insults
+    )
+    if [[ "${_compiler}" == "gcc" ]]; then
+      _cflags+=(
+        -Wno-old-style-definition
       )
+      export \
+        CFLAGS="${_cflags[*]}"
+    fi
     cd \
       "${_tarname}"
     ./configure \
