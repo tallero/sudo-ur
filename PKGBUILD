@@ -244,7 +244,12 @@ if [[ ! -v "_tag" ]]; then
   if [[ "${_release}" == "true" ]]; then
     _tag="${_sudover}"
   elif [[ "${_release}" == "false" ]]; then
-    _tag="${_android_commit}"
+    if [[ "${_gnu}" == "true" ]]; then
+      _tag="${_gnu_commit}"
+    fi
+    if [[ "${_android}" == "true" ]]; then
+      _tag="${_android_commit}"
+    fi
   fi
 fi
 _tarname="${_pkg}-${_tag}"
@@ -262,22 +267,53 @@ if [[ "${_gnu}" == "true" ]]; then
     _uri="${_gnu_url}/${_pkg}/dist/${_tarname}.tar.gz"
     _src="${_tarname}::${_uri}"
     _sig_src="${_tarname}.sig::${_uri}.sig"
+  elif [[ "${_release}" == "false" ]]; then
+    _url="${url}"
+    if [[ "${_evmfs}" == "false" ]]; then
+      if [[ "${_git}" == true ]]; then
+        _src="${_tarname}::git+${_url}#${_tag_name}=${_tag}?signed"
+        _sum="SKIP"
+      elif [[ "${_git}" == false ]]; then
+        _uri=""
+        if [[ "${_git_service}" == "github" ]]; then
+          if [[ "${_tag_name}" == "commit" ]]; then
+            _uri="${_url}-gnu/archive/${_tag}.${_archive_format}"
+            _sum="${_github_sum}"
+          fi
+        elif [[ "${_git_service}" == "gitlab" ]]; then
+          if [[ "${_tag_name}" == "commit" ]]; then
+            _uri="${_url}-gnu/-/archive/${_tag}/${_tag}.${_archive_format}"
+          fi
+        fi
+        _src="${_tarfile}::${_uri}"
+      fi
+    fi
   fi
   source+=(
     "${_src}"
-    "${_sig_src}"
     "${_pkg}_logsrvd.service"
     "${_pkg}.pam"
   )
   sha256sums+=(
     '4a38a1ab3adb1199257edc2a7c4a2bd714665eb605b04368843b06dada2cfcfb'
-    'SKIP'
     'bd4bc2f5d85cbe14d7e7acc5008cb4fe62c38de7d42dc6876c87bfaa273c0a6e'
     '7ec1c668c10e0f83d00e25f336872212fe04ce2c2563e1d661d34d28852f4649'
   )
-  validpgpkeys=(
-    '59D1E9CCBA2B376704FDD35BA9F4C021CEA470FB'
-  )
+  if [[ "${_release}" == "true" ]]; then
+    source+=(
+      "${_sig_src}"
+    )
+    sha256sums+=(
+      'SKIP'
+    )
+    if [[ "${_gnu}" == "true" ]]; then
+      validpgpkeys=(
+        # Todd C. Miller
+        #   <Todd.Miller@sudo.ws
+        '59D1E9CCBA2B376704FDD35BA9F4C021CEA470FB'
+      )
+    fi
+  fi
 fi
 if [[ "${_android}" == "true" ]]; then
   _url="${url}"
@@ -289,7 +325,7 @@ if [[ "${_android}" == "true" ]]; then
       _uri=""
       if [[ "${_git_service}" == "github" ]]; then
         if [[ "${_tag_name}" == "commit" ]]; then
-          _uri="${_url}-android/archive/${_android_commit}.${_archive_format}"
+          _uri="${_url}-android/archive/${_tag}.${_archive_format}"
           _sum="${_github_sum}"
         fi
       elif [[ "${_git_service}" == "gitlab" ]]; then
