@@ -1,12 +1,107 @@
-# Maintainer: Lukas Fleischer <lfleischer@archlinux.org>
-# Contributor: Evangelos Foutras <foutrelis@archlinux.org>
-# Contributor: Allan McRae <allan@archlinux.org>
-# Contributor: Tom Newsom <Jeepster@gmx.co.uk>
+# SPDX-License-Identifier: AGPL-3.0
+
+#    -----------------------------------------------------
+#    Copyright © 2024, 2025, 2026  Pellegrino Prevete
+#
+#    All rights reserved
+#    -----------------------------------------------------
+#
+#    This program is free software: you can redistribute
+#    it and/or modify it under the terms of the
+#    GNU Affero General Public License as published by
+#    the Free Software Foundation, either version 3 of
+#    the License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it
+#    will be useful, but WITHOUT ANY WARRANTY;
+#    without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#    See the GNU Affero General Public License for
+#    more details.
+#
+#    You should have received a copy of the
+#    GNU Affero General Public License
+#    along with this program.
+#    If not, see <https://www.gnu.org/licenses/>.
+
+# Maintainers:
+#   Truocolo
+#     <truocolo@aol.com>
+#     <truocolo@0x6E5163fC4BFc1511Dbe06bB605cc14a3e462332b>
+#   Pellegrino Prevete (dvorak)
+#     <pellegrinoprevete@gmail.com>
+#     <dvorak@0x87003Bd6C074C713783df04f36517451fF34CBEf>
+# Contributors:
+#   Lukas Fleischer
+#     <lfleischer@archlinux.org>
+#   Evangelos Foutras
+#     <foutrelis@archlinux.org>
+#   Allan McRae
+#     <allan@archlinux.org>
+#   Tom Newsom
+#     <Jeepster@gmx.co.uk>
 
 if [[ ! -v "_os" ]]; then
   _os="$(
     uname \
       -o)"
+fi
+
+_etc_get() {
+  local \
+    _etc \
+    _os
+  _os="$(
+    uname \
+      -o)"
+  _etc="etc"
+  if [[ "${_os}" == "Android" ]]; then
+    _etc="usr/etc"
+  fi
+  echo \
+    "${_etc}"
+}
+
+_arch="$(
+  uname \
+    -m)"
+if [[ "${_os}" == "Android" ]]; then
+  _libc="ndk-sysroot"
+  _compiler="clang"
+  _libcompiler="llvm-libs"
+elif [[ "${_os}" == "GNU/Linux" ]]; then
+  _libc="glibc"
+  _compiler="gcc"
+  _libcompiler="libgcc"
+elif [[ "${_os}" == "Msys" ]]; then
+  _libc="msys2-w32api-runtime"
+  _libc_headers="msys2-w32api-headers"
+  _compiler="gcc"
+  _libcompiler="gcc-libs"
+  _sh="sh"
+else
+  _msg=(
+    "Unknown os '${_os}'."
+  )
+  msg \
+    "${_msg[*]}"
+  _libc="msys2-w32api-runtime"
+  _libc_headers="msys2-w32api-headers"
+  _compiler="gcc"
+  _libcompiler="gcc-libs"
+  _sh="sh"
+fi
+_evmfs_available="$(
+  command \
+    -v \
+    "evmfs" || \
+    true)"
+if [[ ! -v "_evmfs" ]]; then
+  if [[ "${_evmfs_available}" != "" ]]; then
+    _evmfs="true"
+  elif [[ "${_evmfs_available}" == "" ]]; then
+    _evmfs="false"
+  fi
 fi
 _pkg=sudo
 if [[ ! -v "_android" ]]; then
@@ -37,6 +132,9 @@ if [[ ! -v "_git" ]]; then
 fi
 if [[ ! -v "_release" ]]; then
   _release="false"
+  if [[ "${_gnu}" == "true" ]]; then
+    _release="true"
+  fi
 fi
 if [[ ! -v "_http" ]]; then
   if [[ "${_git}" == "true" ]]; then
@@ -45,6 +143,26 @@ if [[ ! -v "_http" ]]; then
     _http="https://${_git_service}.com"
     if [[ "${_release}" == "true" ]]; then
       _http="https://www.${_pkg}.ws"
+    fi
+  fi
+fi
+if [[ ! -v "_archive_format" ]]; then
+  if [[ "${_git}" == "true" ]]; then
+    if [[ "${_evmfs}" == "true" ]]; then
+      _archive_format="bundle"
+    elif [[ "${_evmfs}" == "false" ]]; then
+      _archive_format="git"
+    fi
+  elif [[ "${_git}" == "false" ]]; then
+    if [[ "${_release}" == "false" ]]; then
+      _archive_format="tar.gz"
+      if [[ "${_git_service}" == "github" ]]; then
+        _archive_format="zip"
+      elif [[ "${_git_service}" == "gitlab" ]]; then
+        _archive_format="tar.gz"
+      fi
+    if [[ "${_release}" == "true" ]]; then
+      _archive_format="tar.gz"
     fi
   fi
 fi
@@ -61,8 +179,11 @@ if [[ "${_gnu}" == "true" ]]; then
     "${_pkg}-gnu"
   )
 fi
+_sudover=1.9.17p2
 _gnu_ver=1.9.17
+_gnu_commit="8019c5760f7fcdeb3618e48860f5a0be87f49e2c"
 _android_ver=1.2.0
+_android_commit="50b2ec4455b63e3a117d8a1ca7025c3cc8923322"
 pkgver="1000000.g${_gnu_ver}.a${_android_ver}"
 pkgrel=1
 _pkgdesc=(
@@ -91,79 +212,226 @@ license=(
   'custom'
 )
 depends=(
-  'glibc'
+  "${_libc}"
   'openssl'
   'pam'
   'libldap'
   'zlib'
 )
-backup=(
-  'etc/pam.d/sudo'
-  'etc/sudo.conf'
-  'etc/sudo_logsrvd.conf'
-  'etc/sudoers'
+makedepends=(
+  "${_compiler}"
+  "tree"
 )
+_etc="$(
+  _etc_get)"
+backup=(
+  "${_etc}/pam.d/${_pkg}"
+  "${_etc}/${_pkg}.conf"
+  "${_etc}/${_pkg}_logsrvd.conf"
+  "${_etc}/${_pkg}ers"
+)
+if [[ ! -v "_tag_name" ]]; then
+  if [[ "${_release}" == "true" ]]; then
+    _tag_name="tag"
+  elif [[ "${_release}" == "false" ]]; then
+    _tag_name="commit"
+  fi
+fi
+if [[ ! -v "_tag" ]]; then
+  if [[ "${_release}" == "true" ]]; then
+    _tag="${_sudover}"
+  elif [[ "${_release}" == "false" ]]; then
+    _tag_name="${_commit}"
+  fi
+fi
+_tarname="${_pkg}-${_tag}"
+if [[ "${_release}" == "true" ]]; then
+  _tarname="${_pkg}-${_sudover}"
+fi
 source=(
-  "${_gnu_url}/${_pkg}/dist/${_pkg}-${_sudover}.tar.gz{,.sig}
-  "sudo_logsrvd.service
-  "sudo.pam)
-sha256sums=('4a38a1ab3adb1199257edc2a7c4a2bd714665eb605b04368843b06dada2cfcfb'
-            'SKIP'
-            'bd4bc2f5d85cbe14d7e7acc5008cb4fe62c38de7d42dc6876c87bfaa273c0a6e'
-            '7ec1c668c10e0f83d00e25f336872212fe04ce2c2563e1d661d34d28852f4649')
-validpgpkeys=('59D1E9CCBA2B376704FDD35BA9F4C021CEA470FB')
+)
+sha256sums=(
+)
+if [[ "${_gnu}" == "true" ]]; then
+  if [[ "${_release}" == "true" ]]; then
+    _uri="${_gnu_url}/${_pkg}/dist/${_tarname}.tar.gz"
+    _src="${_tarname}::${_uri}"
+    _sig_src="${_tarname}.sig::${_uri}.sig"
+  fi
+  source+=(
+    "${_src}"
+    "${_sig_src}"
+    "${_pkg}_logsrvd.service"
+    "${_pkg}.pam"
+  )
+  sha256sums+=(
+    '4a38a1ab3adb1199257edc2a7c4a2bd714665eb605b04368843b06dada2cfcfb'
+    'SKIP'
+    'bd4bc2f5d85cbe14d7e7acc5008cb4fe62c38de7d42dc6876c87bfaa273c0a6e'
+    '7ec1c668c10e0f83d00e25f336872212fe04ce2c2563e1d661d34d28852f4649'
+  )
+  validpgpkeys=(
+    '59D1E9CCBA2B376704FDD35BA9F4C021CEA470FB'
+  )
+fi
+if [[ "${_android}" == "true" ]]; then
+  if [[ "${_evmfs}" == "false" ]]; then
+    if [[ "${_git}" == true ]]; then
+      _src="${_tarname}::git+${_url}#${_tag_name}=${_tag}?signed"
+      _sum="SKIP"
+    elif [[ "${_git}" == false ]]; then
+      _uri=""
+      if [[ "${_git_service}" == "github" ]]; then
+        if [[ "${_tag_name}" == "commit" ]]; then
+          _uri="${_url}-android/archive/${_commit}.${_archive_format}"
+          _sum="${_github_sum}"
+        fi
+      elif [[ "${_git_service}" == "gitlab" ]]; then
+        if [[ "${_tag_name}" == "commit" ]]; then
+          _uri="${_url}-android/-/archive/${_tag}/${_tag}.${_archive_format}"
+        fi
+      fi
+      _src="${_tarfile}::${_uri}"
+    fi
+  fi
+fi
 
 build() {
-  cd "${pkgname}-${_sudover}"
-
-  ./configure \
-    --prefix=/usr \
-    --sbindir=/usr/bin \
-    --libexecdir=/usr/lib \
-    --with-rundir=/run/sudo \
-    --with-vardir=/var/db/sudo \
-    --with-logfac=auth \
-    --enable-tmpfiles.d \
-    --with-pam \
-    --with-sssd \
-    --with-ldap \
-    --with-ldap-conf-file=/etc/openldap/ldap.conf \
-    --with-env-editor \
-    --with-passprompt="[sudo] password for %p: " \
-    --with-secure-path-value=/usr/local/sbin:/usr/local/bin:/usr/bin \
-    --with-all-insults
-
-  # Prevent excessive overlinking due to libtool; for details, please refer to
-  # https://gitlab.archlinux.org/archlinux/packaging/packages/sudo/-/merge_requests/3.
-  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
-
-  make
+  local \
+    _configure_opts=()
+  if [[ "${_gnu}" == "true" ]]; then
+    _configure_opts+=(
+      --prefix="/usr"
+      --sbindir="/usr/bin"
+      --libexecdir="/usr/lib"
+      --with-rundir="/run/${_pkg}"
+      --with-vardir="/var/db/${_pkg}"
+      --with-logfac="auth"
+      --enable-tmpfiles.d
+      --with-pam
+      --with-sssd
+      --with-ldap
+      --with-ldap-conf-file="/etc/openldap/ldap.conf"
+      --with-env-editor
+      --with-passprompt="[${_pkg}] password for %p: "
+      --with-secure-path-value="/usr/local/sbin:/usr/local/bin:/usr/bin"
+      --with-all-insults
+      )
+    cd \
+      "${_tarname}"
+    ./configure \
+      "${_configure_opts[@]}"
+    # Prevent excessive overlinking due
+    # to libtool; for details, please refer to
+    # https://gitlab.archlinux.org/archlinux/packaging/packages/sudo/-/merge_requests/3.
+    sed \
+      -i \
+      -e \
+        's/ -shared / -Wl,-O1,--as-needed\0/g' \
+      "libtool"
+    make
+  fi
+  if [[ "${_android}" == "true" ]]; then
+    cd \
+      "${_tarname}"
+    make \
+      all
+  fi
 }
 
 check() {
-  make -C "${pkgname}-${_sudover}" check
+  if [[ "${_gnu}" == "true" ]]; then
+    make \
+      -C \
+        "${_tarname}" \
+      check
+  fi
 }
 
-package() {
-  depends+=('libcrypto.so' 'libssl.so')
-
-  cd "${pkgname}-${_sudover}"
-
-  make DESTDIR="$pkgdir" install
-
-  # sudo_logsrvd service file (taken from sudo-logsrvd-1.9.0-1.el8.x86_64.rpm)
-  install -Dm644 -t "$pkgdir/usr/lib/systemd/system" ../sudo_logsrvd.service
-
-  # Remove sudoers.dist; not needed since pacman manages updates to sudoers
-  rm "$pkgdir/etc/sudoers.dist"
-
+package_sudo-gnu() {
+  local \
+    _make_opts=()
+  _make_opts+=(
+    DESTDIR="${pkgdir}"
+  )
+  provides=(
+    "${_pkg}=${_gnu_ver}"
+    "${_pkg}-android=${_android_ver}"
+  )
+  depends+=(
+    'libcrypto.so'
+    'libssl.so'
+  )
+  cd \
+    "${_tarname}"
+  make \
+    "${_make_opts[@]}" \
+    install
+  # sudo_logsrvd service file
+  # (taken from sudo-logsrvd-1.9.0-1.el8.x86_64.rpm)
+  install \
+    -vDm644 \
+    -t \
+    "${pkgdir}/usr/lib/systemd/system" \
+    "../${_pkg}_logsrvd.service"
+  # Remove sudoers.dist; not needed since
+  # pacman manages updates to sudoers
+  rm \
+    "${pkgdir}/etc/${_pkg}ers.dist"
   # Remove /run/sudo directory; we create it using systemd-tmpfiles
-  rmdir "$pkgdir/run/sudo"
-  rmdir "$pkgdir/run"
+  rmdir \
+    "${pkgdir}/run/${_pkg}"
+  rmdir \
+    "${pkgdir}/run"
+  install \
+    -vDm644 \
+    "${srcdir}/${_pkg}.pam" \
+    "${pkgdir}/etc/pam.d/${_pkg}"
+  install \
+    -Dm644 \
+    "LICENSE.md" \
+    -t \
+    "${pkgdir}/usr/share/licenses/${pkgname}"
+}
 
-  install -Dm644 "$srcdir/sudo.pam" "$pkgdir/etc/pam.d/sudo"
-
-  install -Dm644 LICENSE.md -t "$pkgdir/usr/share/licenses/sudo"
+package_sudo-android() {
+  local \
+    _make_opts=()
+  _make_opts+=(
+    "SUDO_PKG__VERSION=${TERMUX_PKG_VERSION}"
+    "SUDO_PKG__ARCH=${TERMUX_ARCH}"
+    "TERMUX__NAME=${TERMUX__NAME}"
+    "TERMUX__LNAME=${TERMUX__LNAME}"
+    "TERMUX_APP__NAME=${TERMUX_APP__NAME}"
+    "TERMUX_APP__PACKAGE_NAME=${TERMUX_APP__PACKAGE_NAME}"
+    "TERMUX_APP__DATA_DIR=${TERMUX_APP__DATA_DIR}"
+    "TERMUX__ROOTFS=${TERMUX__ROOTFS}"
+    "TERMUX__HOME=${TERMUX__HOME}"
+    "TERMUX__PREFIX=${TERMUX__PREFIX}"
+    "TERMUX_ENV__S_ROOT=${TERMUX_ENV__S_ROOT}"
+    "TERMUX_ENV__SS_TERMUX=${TERMUX_ENV__SS_TERMUX}"
+    "TERMUX_ENV__S_TERMUX=${TERMUX_ENV__S_TERMUX}"
+    "TERMUX_ENV__SS_TERMUX_APP=${TERMUX_ENV__SS_TERMUX_APP}"
+    "TERMUX_ENV__S_TERMUX_APP=${TERMUX_ENV__S_TERMUX_APP}"
+  )
+  cd \
+    "${_tarname}"
+  make \
+    all
+  tree \
+    .
+	install \
+    -vdm755 \
+    "${pkgdir}/usr/share/licenses/${pkgname}/licenses"
+  install \
+    -Dm644 \
+    "LICENSE" \
+    -t \
+    "${pkgdir}/usr/share/licenses/${pkgname}"
+  cp \
+    -r \
+    "licenses/"* \
+    "${pkgdir}/usr/share/licenses/${pkgname}/licenses"
 }
 
 # vim:set ts=2 sw=2 et:
