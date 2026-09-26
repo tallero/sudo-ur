@@ -271,6 +271,7 @@ if [[ "${_gnu}" == "true" ]]; then
     _uri="${_gnu_url}/${_pkg}/dist/${_tarname}.tar.gz"
     _src="${_tarname}::${_uri}"
     _sig_src="${_tarname}.sig::${_uri}.sig"
+    _sum='4a38a1ab3adb1199257edc2a7c4a2bd714665eb605b04368843b06dada2cfcfb'
   elif [[ "${_release}" == "false" ]]; then
     _url="${url}"
     if [[ "${_evmfs}" == "false" ]]; then
@@ -299,7 +300,7 @@ if [[ "${_gnu}" == "true" ]]; then
     "${_pkg}.pam"
   )
   sha256sums+=(
-    '4a38a1ab3adb1199257edc2a7c4a2bd714665eb605b04368843b06dada2cfcfb'
+    "${_sum}"
     'bd4bc2f5d85cbe14d7e7acc5008cb4fe62c38de7d42dc6876c87bfaa273c0a6e'
     '7ec1c668c10e0f83d00e25f336872212fe04ce2c2563e1d661d34d28852f4649'
   )
