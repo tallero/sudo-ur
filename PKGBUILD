@@ -161,7 +161,7 @@ if [[ ! -v "_archive_format" ]]; then
       elif [[ "${_git_service}" == "gitlab" ]]; then
         _archive_format="tar.gz"
       fi
-    if [[ "${_release}" == "true" ]]; then
+    elif [[ "${_release}" == "true" ]]; then
       _archive_format="tar.gz"
     fi
   fi
