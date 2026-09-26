@@ -116,14 +116,6 @@ if [[ ! -v "_gnu" ]]; then
     _gnu="false"
   fi
 fi
-if [[ ! -v "_ns" ]]; then
-  _ns="${_pkg}"
-  if [[ "${_android}" == "true" ]]; then
-    _ns="agnosticapollo"
-    _ns="themartiancompany"
-  fi
-  _ns="themartiancompany"
-fi
 if [[ ! -v "_git_service" ]]; then
   _git_service="github"
 fi
@@ -141,6 +133,17 @@ if [[ ! -v "_release" ]]; then
     elif [[ "${_git}" == "false" ]]; then
       _release="false"
     fi
+  fi
+fi
+if [[ ! -v "_ns" ]]; then
+  if [[ "${_android}" == "true" ]]; then
+    _ns="agnosticapollo"
+    _ns="themartiancompany"
+  fi
+  if [[ "${_release}" == "true" ]]; then
+    _ns="${_pkg}"
+  elif [[ "${_release}" == "false" ]]; then
+    _ns="themartiancompany"
   fi
 fi
 if [[ ! -v "_http" ]]; then
@@ -192,7 +195,7 @@ _gnu_commit="8019c5760f7fcdeb3618e48860f5a0be87f49e2c"
 _android_ver=1.2.0
 _android_commit="50b2ec4455b63e3a117d8a1ca7025c3cc8923322"
 pkgver="1000000.g${_gnu_ver}.a${_android_ver}"
-pkgrel=6
+pkgrel=7
 _pkgdesc=(
   "Give certain users the"
   "ability to run some commands as root."
@@ -354,7 +357,7 @@ build() {
     _cflags=() \
     _configure_opts=()
   _cflags+=(
-    ${CFLAGS}
+    # ${CFLAGS}
   )
   if [[ "${_gnu}" == "true" ]]; then
     _configure_opts+=(
