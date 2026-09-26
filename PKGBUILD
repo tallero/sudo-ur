@@ -136,13 +136,17 @@ fi
 if [[ ! -v "_release" ]]; then
   _release="false"
   if [[ "${_gnu}" == "true" ]]; then
-    _release="true"
+    if [[ "${_git}" == "false" ]]; then
+      _release="true"
+    elif [[ "${_git}" == "false" ]]; then
+      _release="false"
+    fi
   fi
 fi
 if [[ ! -v "_http" ]]; then
   if [[ "${_git}" == "true" ]]; then
     _http="https://${_git_service}.com"
-  elif [[ "${_git}" == "true" ]]; then
+  elif [[ "${_git}" == "false" ]]; then
     _http="https://${_git_service}.com"
     if [[ "${_release}" == "true" ]]; then
       _http="https://www.${_pkg}.ws"
