@@ -241,13 +241,15 @@ if [[ ! -v "_tag" ]]; then
   if [[ "${_release}" == "true" ]]; then
     _tag="${_sudover}"
   elif [[ "${_release}" == "false" ]]; then
-    _tag_name="${_commit}"
+    _tag="${_android_commit}"
   fi
 fi
 _tarname="${_pkg}-${_tag}"
 if [[ "${_release}" == "true" ]]; then
   _tarname="${_pkg}-${_sudover}"
 fi
+_tarfile="${_tarname}.${_archive_format}"
+_github_sum="SKIP"
 source=(
 )
 sha256sums=(
@@ -275,6 +277,7 @@ if [[ "${_gnu}" == "true" ]]; then
   )
 fi
 if [[ "${_android}" == "true" ]]; then
+  _url="${url}"
   if [[ "${_evmfs}" == "false" ]]; then
     if [[ "${_git}" == true ]]; then
       _src="${_tarname}::git+${_url}#${_tag_name}=${_tag}?signed"
@@ -283,7 +286,7 @@ if [[ "${_android}" == "true" ]]; then
       _uri=""
       if [[ "${_git_service}" == "github" ]]; then
         if [[ "${_tag_name}" == "commit" ]]; then
-          _uri="${_url}-android/archive/${_commit}.${_archive_format}"
+          _uri="${_url}-android/archive/${_android_commit}.${_archive_format}"
           _sum="${_github_sum}"
         fi
       elif [[ "${_git_service}" == "gitlab" ]]; then
@@ -294,6 +297,12 @@ if [[ "${_android}" == "true" ]]; then
       _src="${_tarfile}::${_uri}"
     fi
   fi
+  source+=(
+    "${_src}"
+  )
+  sha256sums+=(
+    "${_sum}"
+  )
 fi
 
 build() {
